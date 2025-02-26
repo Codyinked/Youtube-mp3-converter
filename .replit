@@ -27,7 +27,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python youtube_audio_downloader.py"
+args = "python youtube_audio_downloader.py https://youtu.be/Bq-ncjOGeVU?si=Bcp2zxx-tLbNEY99"
 
 [deployment]
-run = ["sh", "-c", "python youtube_audio_downloader.py"]
+run = ["sh", "-c", "python youtube_audio_downloader.py https://youtu.be/Bq-ncjOGeVU?si=Bcp2zxx-tLbNEY99"]

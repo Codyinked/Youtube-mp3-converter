@@ -17,10 +17,16 @@ def my_hook(d):
     if d['status'] == 'downloading':
         try:
             percent = d['_percent_str']
-            logger.info(f"Download Progress: {percent}")
+            speed = d.get('speed', 0)
+            if speed:
+                speed_str = f"{speed/1024/1024:.1f} MB/s"
+                print(f"\rDownload Progress: {percent} at {speed_str}", end='', flush=True)
+            else:
+                print(f"\rDownload Progress: {percent}", end='', flush=True)
         except Exception:
             pass
     elif d['status'] == 'finished':
+        print("\nDownload completed, starting conversion...")
         logger.info('Download completed, starting conversion...')
 
 def download_audio(url, output_dir="downloads"):
@@ -58,6 +64,7 @@ def download_audio(url, output_dir="downloads"):
             }],
         }
 
+        print(f"\nFetching video information from: {url}")
         logger.info(f"Fetching video information from: {url}")
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
@@ -67,6 +74,7 @@ def download_audio(url, output_dir="downloads"):
                     raise Exception("Could not fetch video information")
 
                 video_title = sanitize_filename(info.get('title', 'unknown_video'))
+                print(f"Video title: {video_title}")
                 logger.info(f"Video title: {video_title}")
 
                 # Download and convert to MP3
@@ -93,6 +101,7 @@ def download_audio(url, output_dir="downloads"):
         if hasattr(e, '__traceback__'):
             import traceback
             logger.error(f"Traceback: {''.join(traceback.format_tb(e.__traceback__))}")
+        print(f"\nError: {str(e)}")
         return None
 
 def main():
