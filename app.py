@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import os
 from youtube_audio_downloader import download_audio
 from database import insert_download_record
@@ -18,10 +18,7 @@ os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 @app.route('/')
 def index():
-    return jsonify({
-        "status": "ok",
-        "message": "YouTube to MP3 Converter API is running"
-    })
+    return render_template('index.html')
 
 @app.route('/convert', methods=['POST'])
 def convert():
