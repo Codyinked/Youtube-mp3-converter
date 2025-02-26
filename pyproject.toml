@@ -7,6 +7,7 @@ dependencies = [
     "psycopg2-binary>=2.9.10",
     "pydub>=0.25.1",
     "pytube==15.0.0",
+    "requests>=2.32.3",
     "supabase>=2.13.0",
     "tqdm>=4.67.1",
     "trafilatura>=2.0.0",

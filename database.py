@@ -24,7 +24,7 @@ def get_db_connection():
         logger.error(f"Error connecting to database: {str(e)}")
         raise
 
-def insert_download_record(video_id: str, title: str, file_path: str) -> bool:
+def insert_download_record(video_id: str, title: str, file_path: str, public_url: str = None) -> bool:
     """
     Insert a record of downloaded video into the database
 
@@ -32,6 +32,7 @@ def insert_download_record(video_id: str, title: str, file_path: str) -> bool:
         video_id (str): YouTube video ID
         title (str): Video title
         file_path (str): Path to the downloaded MP3 file
+        public_url (str, optional): Public URL of the uploaded file
 
     Returns:
         bool: True if successful, False otherwise
@@ -43,11 +44,11 @@ def insert_download_record(video_id: str, title: str, file_path: str) -> bool:
                 logger.info("Executing INSERT statement...")
                 cur.execute(
                     """
-                    INSERT INTO downloads (video_id, title, file_path, downloaded_at)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO downloads (video_id, title, file_path, downloaded_at, public_url)
+                    VALUES (%s, %s, %s, %s, %s)
                     RETURNING id;
                     """,
-                    (video_id, title, file_path, datetime.utcnow())
+                    (video_id, title, file_path, datetime.utcnow(), public_url)
                 )
                 record_id = cur.fetchone()[0]
                 conn.commit()

@@ -9,10 +9,14 @@ from tqdm import tqdm
 from urllib.parse import urlparse, parse_qs
 from utils import validate_url, create_output_directory, sanitize_filename
 from database import insert_download_record
+from storage import StorageUploader
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+# Initialize storage uploader
+storage = StorageUploader()
 
 def get_video_id(url):
     """Extract video ID from YouTube URL"""
@@ -68,12 +72,12 @@ def download_audio(url, output_dir="downloads"):
             'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
             'restrictfilenames': True,
             'noplaylist': True,
-            'verbose': True,  # Enable verbose output for debugging
-            'progress_hooks': [my_hook],  # Add progress hook
-            'retries': 10,  # Number of retries for network errors
-            'fragment_retries': 10,  # Number of retries for stream fragments
-            'extractor_retries': 10,  # Number of retries for extractor errors
-            'file_access_retries': 10,  # Number of retries for file access
+            'verbose': True,
+            'progress_hooks': [my_hook],
+            'retries': 10,
+            'fragment_retries': 10,
+            'extractor_retries': 10,
+            'file_access_retries': 10,
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
@@ -106,8 +110,18 @@ def download_audio(url, output_dir="downloads"):
                     logger.info(f"Success! File saved as: {mp3_file}")
                     print(f"\nSuccess! File saved as: {mp3_file}")
 
+                    # Upload to Supabase Storage
+                    print("Uploading to Supabase Storage...")
+                    public_url = storage.upload_file(mp3_file)
+
+                    if public_url:
+                        print("File uploaded successfully!")
+                        print(f"Public URL: {public_url}")
+                    else:
+                        print("Warning: Failed to upload file to storage")
+
                     # Record the download in the database
-                    if insert_download_record(video_id, video_title, mp3_file):
+                    if insert_download_record(video_id, video_title, mp3_file, public_url):
                         logger.info("Download recorded in database")
                         print("Download recorded in database")
                     else:
