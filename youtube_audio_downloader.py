@@ -104,10 +104,12 @@ def download_audio(url, output_dir="downloads"):
 
                 # The file will be automatically converted to MP3 by yt-dlp
                 mp3_file = os.path.join(output_dir, f"{video_title}.mp3")
+                logger.info(f"Checking for MP3 file at: {mp3_file}")
 
                 # Check if file exists and has size greater than 0
-                if os.path.exists(mp3_file) and os.path.getsize(mp3_file) > 0:
-                    logger.info(f"Success! File saved as: {mp3_file}")
+                if os.path.exists(mp3_file):
+                    file_size = os.path.getsize(mp3_file)
+                    logger.info(f"Found MP3 file. Size: {file_size} bytes")
                     print(f"\nSuccess! File saved as: {mp3_file}")
 
                     # Upload to Supabase Storage
@@ -130,7 +132,15 @@ def download_audio(url, output_dir="downloads"):
 
                     return mp3_file
                 else:
-                    logger.error(f"MP3 file not found or empty after download: {mp3_file}")
+                    # Check for alternative file name (with underscores instead of parentheses)
+                    alt_title = video_title.replace('(', '_').replace(')', '_')
+                    alt_mp3_file = os.path.join(output_dir, f"{alt_title}.mp3")
+
+                    if os.path.exists(alt_mp3_file):
+                        logger.info(f"Found MP3 file with alternative name: {alt_mp3_file}")
+                        return alt_mp3_file
+
+                    logger.error(f"MP3 file not found. Checked paths:\n{mp3_file}\n{alt_mp3_file}")
                     raise Exception(f"MP3 file not found or empty after download: {mp3_file}")
 
             except Exception as e:
