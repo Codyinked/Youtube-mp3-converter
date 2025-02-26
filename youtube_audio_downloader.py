@@ -6,11 +6,23 @@ import time
 import yt_dlp
 from pydub import AudioSegment
 from tqdm import tqdm
+from urllib.parse import urlparse, parse_qs
 from utils import validate_url, create_output_directory, sanitize_filename
+from database import insert_download_record
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+
+def get_video_id(url):
+    """Extract video ID from YouTube URL"""
+    parsed_url = urlparse(url)
+    if parsed_url.hostname in ('youtu.be', 'www.youtu.be'):
+        return parsed_url.path[1:]
+    if parsed_url.hostname in ('youtube.com', 'www.youtube.com'):
+        if parsed_url.path == '/watch':
+            return parse_qs(parsed_url.query)['v'][0]
+    return None
 
 def my_hook(d):
     """Custom progress hook for yt-dlp"""
@@ -44,6 +56,11 @@ def download_audio(url, output_dir="downloads"):
         # Create output directory if it doesn't exist
         create_output_directory(output_dir)
         logger.info(f"Using output directory: {output_dir}")
+
+        # Extract video ID
+        video_id = get_video_id(url)
+        if not video_id:
+            raise Exception("Could not extract video ID from URL")
 
         # Configure yt-dlp options
         ydl_opts = {
@@ -84,13 +101,23 @@ def download_audio(url, output_dir="downloads"):
                 # The file will be automatically converted to MP3 by yt-dlp
                 mp3_file = os.path.join(output_dir, f"{video_title}.mp3")
 
-                if os.path.exists(mp3_file):
+                # Check if file exists and has size greater than 0
+                if os.path.exists(mp3_file) and os.path.getsize(mp3_file) > 0:
                     logger.info(f"Success! File saved as: {mp3_file}")
                     print(f"\nSuccess! File saved as: {mp3_file}")
+
+                    # Record the download in the database
+                    if insert_download_record(video_id, video_title, mp3_file):
+                        logger.info("Download recorded in database")
+                        print("Download recorded in database")
+                    else:
+                        logger.warning("Failed to record download in database")
+                        print("Warning: Failed to record download in database")
+
                     return mp3_file
                 else:
-                    logger.error("MP3 file not found after download")
-                    raise Exception("MP3 file not found after download")
+                    logger.error(f"MP3 file not found or empty after download: {mp3_file}")
+                    raise Exception(f"MP3 file not found or empty after download: {mp3_file}")
 
             except Exception as e:
                 logger.error(f"Error during yt-dlp operation: {str(e)}")

@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
+    "psycopg2-binary>=2.9.10",
     "pydub>=0.25.1",
     "pytube==15.0.0",
+    "supabase>=2.13.0",
     "tqdm>=4.67.1",
     "trafilatura>=2.0.0",
     "yt-dlp>=2025.2.19",
