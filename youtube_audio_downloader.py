@@ -66,10 +66,10 @@ def download_audio(url, output_dir="downloads"):
         if not video_id:
             raise Exception("Could not extract video ID from URL")
 
-        # Configure yt-dlp options
+        # Configure yt-dlp options with simpler naming scheme
         ydl_opts = {
             'format': 'bestaudio/best',
-            'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+            'outtmpl': os.path.join(output_dir, '%(id)s.%(ext)s'),
             'restrictfilenames': True,
             'noplaylist': True,
             'verbose': True,
@@ -90,58 +90,34 @@ def download_audio(url, output_dir="downloads"):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             try:
                 # Get video info first
-                info = ydl.extract_info(url, download=False)
+                info = ydl.extract_info(url, download=True)
                 if not info:
                     raise Exception("Could not fetch video information")
 
-                video_title = sanitize_filename(info.get('title', 'unknown_video'))
-                print(f"Video title: {video_title}")
-                logger.info(f"Video title: {video_title}")
-
-                # Download and convert to MP3
-                logger.info("Starting download and conversion...")
-                ydl.download([url])
-
-                # The file will be automatically converted to MP3 by yt-dlp
-                mp3_file = os.path.join(output_dir, f"{video_title}.mp3")
+                # The file will be named using the video ID
+                mp3_file = os.path.join(output_dir, f"{info['id']}.mp3")
                 logger.info(f"Looking for MP3 file at: {mp3_file}")
 
-                # Try different possible filenames
-                possible_filenames = [
-                    mp3_file,
-                    os.path.join(output_dir, f"{info['title'].replace(' ', '_')}.mp3"),
-                    os.path.join(output_dir, f"{info['id']}.mp3")
-                ]
+                if os.path.exists(mp3_file):
+                    file_size = os.path.getsize(mp3_file)
+                    if file_size > 0:
+                        logger.info(f"Found MP3 file: {mp3_file} (size: {file_size} bytes)")
+                        print(f"\nSuccess! File saved as: {mp3_file}")
 
-                for possible_file in possible_filenames:
-                    logger.info(f"Checking for file at: {possible_file}")
-                    if os.path.exists(possible_file):
-                        file_size = os.path.getsize(possible_file)
-                        if file_size > 0:
-                            logger.info(f"Found MP3 file: {possible_file} (size: {file_size} bytes)")
-                            print(f"\nSuccess! File saved as: {possible_file}")
+                        # Upload to Supabase Storage
+                        print("Uploading to Supabase Storage...")
+                        public_url = storage.upload_file(mp3_file)
 
-                            # Upload to Supabase Storage
-                            print("Uploading to Supabase Storage...")
-                            public_url = storage.upload_file(possible_file)
+                        if public_url:
+                            print("File uploaded successfully!")
+                            print(f"Public URL: {public_url}")
 
-                            if public_url:
-                                print("File uploaded successfully!")
-                                print(f"Public URL: {public_url}")
-                            else:
-                                print("Warning: Failed to upload file to storage")
-
-                            # Record the download in the database
-                            if insert_download_record(info['id'], info['title'], possible_file, public_url):
+                            # Record the download in database
+                            if insert_download_record(info['id'], info['title'], mp3_file, public_url):
                                 logger.info("Download recorded in database")
-                                print("Download recorded in database")
-                            else:
-                                logger.warning("Failed to record download in database")
-                                print("Warning: Failed to record download in database")
+                            return mp3_file
 
-                            return possible_file
-
-                logger.error("MP3 file not found in any of the expected locations")
+                logger.error(f"MP3 file not found: {mp3_file}")
                 raise Exception("MP3 file not found after download and conversion")
 
             except Exception as e:
