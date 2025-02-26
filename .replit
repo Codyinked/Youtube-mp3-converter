@@ -1,0 +1,33 @@
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-24_05"
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "YouTube Audio Downloader"
+
+[[workflows.workflow]]
+name = "YouTube Audio Downloader"
+author = "agent"
+
+[workflows.workflow.metadata]
+agentRequireRestartOnSave = false
+
+[[workflows.workflow.tasks]]
+task = "packager.installForAll"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python youtube_audio_downloader.py https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+
+[deployment]
+run = ["sh", "-c", "python youtube_audio_downloader.py https://www.youtube.com/watch?v=dQw4w9WgXcQ"]
