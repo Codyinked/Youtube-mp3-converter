@@ -7,4 +7,6 @@ dependencies = [
     "pydub>=0.25.1",
     "pytube==15.0.0",
     "tqdm>=4.67.1",
+    "trafilatura>=2.0.0",
+    "yt-dlp>=2025.2.19",
 ]
