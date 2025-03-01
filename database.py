@@ -1,25 +1,25 @@
 import os
 import psycopg2
-from datetime import datetime
-import logging
+from urllib.parse import urlparse
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 
 def get_db_connection():
-    """Get database connection using environment variables"""
-    try:
-        logger.info("Attempting to connect to database...")
-        conn = psycopg2.connect(
-            host=os.environ.get("PGHOST"),
-            database=os.environ.get("PGDATABASE"),
-            user=os.environ.get("PGUSER"),
-            password=os.environ.get("PGPASSWORD"),
-            port=os.environ.get("PGPORT")
-        )
-        logger.info("Successfully connected to database")
-        return conn
+    """Establish a connection to PostgreSQL using the DATABASE_URL"""
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL is not set in environment variables")
+
+    result = urlparse(DATABASE_URL)
+    
+    conn = psycopg2.connect(
+        dbname=result.path[1:],
+        user=result.username,
+        password=result.password,
+        host=result.hostname,
+        port=result.port
+    )
+    return conn
+
     except Exception as e:
         logger.error(f"Error connecting to database: {str(e)}")
         raise
