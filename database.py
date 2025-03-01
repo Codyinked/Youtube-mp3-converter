@@ -32,15 +32,6 @@ def get_db_connection():
 def insert_download_record(video_id: str, title: str, file_path: str, public_url: str = None) -> bool:
     """
     Insert a record of downloaded video into the database
-
-    Args:
-        video_id (str): YouTube video ID
-        title (str): Video title
-        file_path (str): Path to the downloaded MP3 file
-        public_url (str, optional): Public URL of the uploaded file
-
-    Returns:
-        bool: True if successful, False otherwise
     """
     try:
         logger.info(f"Attempting to insert download record for video ID: {video_id}")
@@ -59,20 +50,13 @@ def insert_download_record(video_id: str, title: str, file_path: str, public_url
                 conn.commit()
                 logger.info(f"Successfully recorded download for video: {title} (ID: {record_id})")
                 return True
-
     except Exception as e:
         logger.error(f"Error recording download: {str(e)}")
-        if hasattr(e, '__traceback__'):
-            import traceback
-            logger.error(f"Traceback: {''.join(traceback.format_tb(e.__traceback__))}")
         return False
 
 def get_download_history() -> list:
     """
     Get list of all downloaded videos
-
-    Returns:
-        list: List of downloaded video records
     """
     try:
         with get_db_connection() as conn:
