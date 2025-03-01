@@ -4,7 +4,6 @@ import logging
 import re
 import time
 import yt_dlp
-from tqdm import tqdm
 from urllib.parse import urlparse, parse_qs
 from utils import validate_url, create_output_directory, sanitize_filename
 from database import insert_download_record
