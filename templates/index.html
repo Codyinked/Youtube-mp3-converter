@@ -1,6 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube to MP3 Converter</title>
     <style>
         body {
@@ -54,14 +56,16 @@
     <div id="result" class="result"></div>
 
     <script>
+        const API_URL = "https://youtube-mp3-converter-production.up.railway.app";  // Replace with your actual Railway API URL
+
         document.getElementById('convertForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const result = document.getElementById('result');
             result.style.display = 'block';
             result.innerHTML = 'Converting... Please wait.';
-            
+
             try {
-                const response = await fetch('/convert', {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -70,13 +74,18 @@
                         youtube_url: document.getElementById('youtube_url').value
                     })
                 });
-                
+
                 const data = await response.json();
-                if (data.error) {
-                    result.innerHTML = `Error: ${data.error}`;
-                } else {
-                    result.innerHTML = `Success! <a href="${data.mp3_url}" target="_blank">Download MP3</a>`;
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Unknown error occurred.");
                 }
+
+                if (!data.mp3_url) {
+                    throw new Error("MP3 URL missing from response.");
+                }
+
+                result.innerHTML = `Success! <a href="${data.mp3_url}" target="_blank">Download MP3</a>`;
             } catch (error) {
                 result.innerHTML = `Error: ${error.message}`;
             }
