@@ -56,7 +56,7 @@
     <div id="result" class="result"></div>
 
     <script>
-        const API_URL = "https://youtube-mp3-converter-production.up.railway.app";  
+        const API_URL = "https://youtube-mp3-converter-production.up.railway.app/convert";
 
         document.getElementById('convertForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -65,7 +65,7 @@
             result.innerHTML = 'Converting... Please wait.';
 
             try {
-                const response = await fetch(API_URL + "/convert", {
+                const response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -93,3 +93,4 @@
     </script>
 </body>
 </html>
+
