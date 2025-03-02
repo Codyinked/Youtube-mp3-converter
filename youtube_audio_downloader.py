@@ -3,14 +3,14 @@ import yt_dlp
 import logging
 from datetime import datetime
 
-# If StorageUploader is still needed, ensure it's correctly imported
+# ✅ Check if StorageUploader is available
 try:
     from storage import StorageUploader
     STORAGE_ENABLED = True
 except ImportError:
     STORAGE_ENABLED = False
 
-# Setup logging
+# ✅ Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,3 @@ def process_download(youtube_url):
         "downloaded_at": datetime.utcnow().isoformat()
     }
 
-
-if __name__ == "__main__":
-    main()
