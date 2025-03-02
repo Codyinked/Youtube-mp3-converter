@@ -14,11 +14,12 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
+# ✅ Ensure the downloads folder exists
 DOWNLOAD_FOLDER = "downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 def download_audio(youtube_url):
-    """Download YouTube audio and save as MP3."""
+    """Download YouTube audio and save it as MP3."""
     ydl_opts = {
         "format": "bestaudio/best",
         "outtmpl": f"{DOWNLOAD_FOLDER}/%(id)s.%(ext)s",
@@ -33,19 +34,19 @@ def download_audio(youtube_url):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=True)
             filename = f"{info_dict['id']}.mp3"
-        logger.info(f"Downloaded: {filename}")
-        return filename
+            file_path = os.path.join(DOWNLOAD_FOLDER, filename)
+        logger.info(f"Downloaded: {file_path}")
+        return file_path
     except Exception as e:
         logger.error(f"Download failed: {str(e)}")
         return None
 
 def process_download(youtube_url):
     """Download, optionally upload to storage, and return metadata."""
-    filename = download_audio(youtube_url)
-    if not filename:
+    file_path = download_audio(youtube_url)
+    if not file_path:
         return None
 
-    file_path = os.path.join(DOWNLOAD_FOLDER, filename)
     public_url = None
 
     if STORAGE_ENABLED:
@@ -59,7 +60,7 @@ def process_download(youtube_url):
     return {
         "file_path": file_path,
         "public_url": public_url,
-        "filename": filename,
+        "filename": os.path.basename(file_path),
         "downloaded_at": datetime.utcnow().isoformat()
     }
 
