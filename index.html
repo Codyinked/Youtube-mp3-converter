@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube to MP3 Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-container {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>YouTube to MP3 Converter</h1>
+    <div class="form-container">
+        <form id="convertForm">
+            <label for="youtube_url">Enter YouTube URL:</label>
+            <input type="text" id="youtube_url" name="youtube_url" required>
+            <button type="submit">Convert to MP3</button>
+        </form>
+    </div>
+    <div id="result" class="result"></div>
+
+    <script>
+        const API_URL = "https://youtube-mp3-converter-production.up.railway.app";  // Replace with your actual Railway API URL
+
+        document.getElementById('convertForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const result = document.getElementById('result');
+            result.style.display = 'block';
+            result.innerHTML = 'Converting... Please wait.';
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        youtube_url: document.getElementById('youtube_url').value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || "Unknown error occurred.");
+                }
+
+                if (!data.mp3_url) {
+                    throw new Error("MP3 URL missing from response.");
+                }
+
+                result.innerHTML = `Success! <a href="${data.mp3_url}" target="_blank">Download MP3</a>`;
+            } catch (error) {
+                result.innerHTML = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
