@@ -1,17 +1,20 @@
 from flask import Flask, request, jsonify, render_template
-from flask_cors import CORS  # ✅ Added CORS support
+from flask_cors import CORS
 import os
+import logging
 from youtube_audio_downloader import download_audio
 from database import insert_download_record
 from storage import StorageUploader
-import logging
 
 # ✅ Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)  # ✅ Allow frontend access from any domain
+# ✅ Initialize Flask app & CORS
+app = Flask(__name__, template_folder="templates")
+CORS(app, resources={r"/convert": {"origins": "*"}})  # ✅ Allow cross-origin requests
+
+# ✅ Initialize storage
 storage = StorageUploader()
 
 # ✅ Ensure downloads directory exists
