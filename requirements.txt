@@ -3,3 +3,4 @@ yt-dlp
 gunicorn
 requests
 psycopg2-binary
+flask_cors
