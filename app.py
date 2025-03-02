@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import os
 import logging
@@ -11,23 +11,20 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ✅ Initialize Flask app & CORS
-app = Flask(__name__, template_folder="templates")
-CORS(app, resources={r"/convert": {"origins": "*"}})  # ✅ Allow cross-origin requests
-
-# ✅ Initialize storage
-storage = StorageUploader()
+app = Flask(__name__, static_folder="static", static_url_path="")
+CORS(app, resources={r"/*": {"origins": "*"}})  # ✅ Allow all frontend requests
 
 # ✅ Ensure downloads directory exists
 DOWNLOAD_FOLDER = "downloads"
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
 @app.route('/')
-def index():
-    """ Serve the frontend HTML file """
+def serve_frontend():
+    """ Serve the frontend index.html from root """
     try:
-        return render_template('index.html')
+        return send_from_directory(os.getcwd(), "index.html")
     except Exception as e:
-        logger.error(f"Error loading index.html: {str(e)}")
+        logger.error(f"Error loading index.html: {str(e)}", exc_info=True)
         return jsonify({"error": "Failed to load frontend"}), 500
 
 @app.route('/convert', methods=['POST'])
@@ -73,3 +70,4 @@ def convert():
 if __name__ == '__main__':
     # ✅ Ensure it runs on port 5000 for Railway deployment
     app.run(host='0.0.0.0', port=5000, debug=True)
+
