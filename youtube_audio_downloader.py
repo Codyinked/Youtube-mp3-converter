@@ -1,40 +1,39 @@
-import os
 import yt_dlp
-import logging
-from datetime import datetime
+import os
 
-# ✅ Ensure the downloads folder exists
-DOWNLOAD_FOLDER = "downloads"
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+def process_download(youtube_url, output_dir="downloads"):
+    """
+    Downloads a YouTube video as MP3.
 
-# ✅ Setup logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
+    Args:
+        youtube_url (str): The URL of the YouTube video.
+        output_dir (str): Directory to save the MP3 file.
 
-# ✅ Specify FFmpeg location (Ensure Railway has it installed)
-FFMPEG_LOCATION = "/usr/bin/ffmpeg"  # Default Linux path, adjust if needed
+    Returns:
+        str: Path to the downloaded MP3 file, or None if download fails.
+    """
+    os.makedirs(output_dir, exist_ok=True)  # ✅ Ensure the output directory exists
+    output_template = os.path.join(output_dir, "%(title)s.%(ext)s")
 
-def download_audio(youtube_url):
-    """Download YouTube audio and save it as MP3 using yt-dlp."""
     ydl_opts = {
         "format": "bestaudio/best",
-        "outtmpl": f"{DOWNLOAD_FOLDER}/%(id)s.%(ext)s",
-        "postprocessors": [{
-            "key": "FFmpegExtractAudio",
-            "preferredcodec": "mp3",
-            "preferredquality": "192",
-        }],
-        "ffmpeg_location": FFMPEG_LOCATION,  # ✅ Explicitly specify FFmpeg location
+        "outtmpl": output_template,
+        "postprocessors": [
+            {
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": "mp3",
+                "preferredquality": "192",
+            }
+        ],
+        "ffmpeg_location": "/usr/bin/ffmpeg",  # ✅ Ensure FFmpeg is correctly referenced
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(youtube_url, download=True)
-            filename = f"{info_dict['id']}.mp3"
-            file_path = os.path.join(DOWNLOAD_FOLDER, filename)
-        logger.info(f"Downloaded and converted: {file_path}")
-        return file_path
-    except Exception as e:
-        logger.error(f"Download failed: {str(e)}")
-        return None
+            file_path = ydl.prepare_filename(info_dict).replace(".webm", ".mp3").replace(".m4a", ".mp3")
+            return file_path  # ✅ Return the path of the downloaded MP3 file
 
+    except Exception as e:
+        print(f"Error downloading video: {str(e)}")
+        return None
