@@ -1,35 +1,30 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import os
 import logging
-from youtube_audio_downloader import download_audio
+from youtube_audio_downloader import process_download
 from database import insert_download_record
-from storage import StorageUploader
 
 # ✅ Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ✅ Initialize Flask app & CORS
-app = Flask(__name__, static_folder=".", static_url_path="")
-CORS(app, resources={r"/convert": {"origins": "*"}})  # ✅ Allow all frontend requests
-
-# ✅ Ensure downloads directory exists
-DOWNLOAD_FOLDER = "downloads"
-os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
+app = Flask(__name__, template_folder="templates", static_folder="static")
+CORS(app, resources={r"/*": {"origins": "*"}})  # ✅ Allow cross-origin requests
 
 @app.route('/')
-def serve_frontend():
-    """ Serve the frontend index.html from root """
+def index():
+    """ Serve the frontend HTML file """
     try:
-        return send_from_directory(os.getcwd(), "index.html")
+        return render_template('index.html')
     except Exception as e:
-        logger.error(f"Error loading index.html: {str(e)}", exc_info=True)
+        logger.error(f"Error loading index.html: {str(e)}")
         return jsonify({"error": "Failed to load frontend"}), 500
 
 @app.route('/convert', methods=['POST'])
 def convert():
-    """ Convert YouTube video to MP3 and upload it """
+    """ Convert YouTube video to MP3 and return download link """
     try:
         data = request.get_json()
         youtube_url = data.get("youtube_url")
@@ -38,30 +33,21 @@ def convert():
             return jsonify({"error": "No YouTube URL provided"}), 400
 
         logger.info(f"Processing download request for URL: {youtube_url}")
-        output_file = download_audio(youtube_url, DOWNLOAD_FOLDER)
+        result = process_download(youtube_url)
 
-        if not output_file:
+        if not result or not result["file_path"]:
             logger.error("Failed to download video.")
             return jsonify({"error": "Failed to download and convert video"}), 500
 
-        # ✅ Upload to Supabase Storage
-        logger.info("Uploading to Supabase Storage...")
-        storage = StorageUploader()
-        public_url = storage.upload_file(output_file)
-
-        if not public_url:
-            logger.error("Failed to upload file to storage.")
-            return jsonify({"error": "Failed to upload file to storage"}), 500
-
         # ✅ Store record in database
-        insert_success = insert_download_record(youtube_url, output_file, public_url)
+        insert_success = insert_download_record(youtube_url, result["file_path"], result["public_url"])
         if not insert_success:
             logger.warning("Failed to insert download record into database.")
 
         return jsonify({
             "success": True,
-            "file_path": output_file,
-            "mp3_url": public_url
+            "file_path": result["file_path"],
+            "mp3_url": result["public_url"]
         })
 
     except Exception as e:
