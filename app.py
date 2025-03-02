@@ -11,8 +11,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ✅ Initialize Flask app & CORS
-app = Flask(__name__, static_folder="static", static_url_path="")
-CORS(app, resources={r"/*": {"origins": "*"}})  # ✅ Allow all frontend requests
+app = Flask(__name__, static_folder=".", static_url_path="")
+CORS(app, resources={r"/convert": {"origins": "*"}})  # ✅ Allow all frontend requests
 
 # ✅ Ensure downloads directory exists
 DOWNLOAD_FOLDER = "downloads"
@@ -46,6 +46,7 @@ def convert():
 
         # ✅ Upload to Supabase Storage
         logger.info("Uploading to Supabase Storage...")
+        storage = StorageUploader()
         public_url = storage.upload_file(output_file)
 
         if not public_url:
@@ -70,4 +71,3 @@ def convert():
 if __name__ == '__main__':
     # ✅ Ensure it runs on port 5000 for Railway deployment
     app.run(host='0.0.0.0', port=5000, debug=True)
-
